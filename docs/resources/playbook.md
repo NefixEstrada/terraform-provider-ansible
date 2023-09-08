@@ -37,7 +37,7 @@ resource "ansible_playbook" "playbook" {
 - `ansible_playbook_binary` (String) Path to ansible-playbook executable (binary).
 - `check_mode` (Boolean) If 'true', playbook execution won't make any changes but only change predictions will be made.
 - `diff_mode` (Boolean) If 'true', when changing (small) files and templates, differences in those files will be shown. Recommended usage with 'check_mode'.
-- `extra_vars` (Map of String) A map of additional variables as: { key-1 = value-1, key-2 = value-2, ... }.
+- `extra_vars` (String) A map of additional variables as: { key-1 = value-1, key-2 = value-2, ... }. Use jsonencode()
 - `force_handlers` (Boolean) If 'true', run handlers even if a task fails.
 - `groups` (List of String) List of desired groups of hosts on which the playbook will be executed.
 - `ignore_playbook_failure` (Boolean) This parameter is good for testing. Set to 'true' if the desired playbook is meant to fail, but still want the resource to run successfully.

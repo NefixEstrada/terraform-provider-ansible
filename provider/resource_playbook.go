@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"os/exec"
@@ -134,11 +135,10 @@ func resourcePlaybook() *schema.Resource {
 
 			// become configs are handled with extra_vars --> these are also connection configs
 			"extra_vars": {
-				Type:        schema.TypeMap,
-				Elem:        &schema.Schema{Type: schema.TypeString},
+				Type:        schema.TypeString,
 				Required:    false,
 				Optional:    true,
-				Description: "A map of additional variables as: { key-1 = value-1, key-2 = value-2, ... }.",
+				Description: "A map of additional variables as: { key-1 = value-1, key-2 = value-2, ... }. Use jsonencode()",
 			},
 
 			"var_files": { // adds @ at the beginning of filename
@@ -251,7 +251,7 @@ func resourcePlaybookCreate(data *schema.ResourceData, meta interface{}) error {
 		log.Fatalf("ERROR [%s]: couldn't get 'force_handlers'!", ansiblePlaybook)
 	}
 
-	extraVars, okay := data.Get("extra_vars").(map[string]interface{})
+	extraVars, okay := data.Get("extra_vars").(string)
 	if !okay {
 		log.Fatalf("ERROR [%s]: couldn't get 'extra_vars'!", ansiblePlaybook)
 	}
@@ -374,14 +374,11 @@ func resourcePlaybookCreate(data *schema.ResourceData, meta interface{}) error {
 	}
 
 	if len(extraVars) != 0 {
-		for key, val := range extraVars {
-			tmpVal, okay := val.(string)
-			if !okay {
-				log.Fatal("ERROR [ansible-playbook]: couldn't assert type: string")
-			}
-
-			args = append(args, "-e", key+"="+tmpVal)
+		if !json.Valid([]byte(extraVars)) {
+			log.Fatal("ERROR [ansible-playbook]: invalid json. Please use jsonencode()")
 		}
+
+		args = append(args, "-e", extraVars)
 	}
 
 	args = append(args, playbook)
