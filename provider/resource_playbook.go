@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"os/exec"
@@ -140,7 +141,12 @@ func resourcePlaybook() *schema.Resource {
 				Optional:    true,
 				Description: "A map of additional variables as: { key-1 = value-1, key-2 = value-2, ... }.",
 			},
-
+			"extra_vars_json": {
+				Type:        schema.TypeString,
+				Required:    false,
+				Optional:    true,
+				Description: "Same as extra_vars, but it's going to be sent as a JSON variable. Hint: use jsonencode()",
+			},
 			"var_files": { // adds @ at the beginning of filename
 				Type:        schema.TypeList,
 				Elem:        &schema.Schema{Type: schema.TypeString},
@@ -254,6 +260,11 @@ func resourcePlaybookCreate(data *schema.ResourceData, meta interface{}) error {
 	extraVars, okay := data.Get("extra_vars").(map[string]interface{})
 	if !okay {
 		log.Fatalf("ERROR [%s]: couldn't get 'extra_vars'!", ansiblePlaybook)
+	}
+
+	extraVarsJSON, okay := data.Get("extra_vars_json").(string)
+	if !okay {
+		log.Fatalf("ERROR [%s]: couldn't get 'extra_vars_json'!", ansiblePlaybook)
 	}
 
 	varFiles, okay := data.Get("var_files").([]interface{})
@@ -382,6 +393,14 @@ func resourcePlaybookCreate(data *schema.ResourceData, meta interface{}) error {
 
 			args = append(args, "-e", key+"="+tmpVal)
 		}
+	}
+
+	if len(extraVarsJSON) != 0 {
+		if !json.Valid([]byte(extraVarsJSON)) {
+			log.Fatal("ERROR [ansible-playbook]: couldn't assert type: valid JSON string")
+		}
+
+		args = append(args, "-e", extraVarsJSON)
 	}
 
 	args = append(args, playbook)

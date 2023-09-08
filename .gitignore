@@ -9,6 +9,7 @@ act
 golangci-lint
 terraform-provider-ansible
 *.tar.gz
+dist/
 
 # logs
 targets.log
